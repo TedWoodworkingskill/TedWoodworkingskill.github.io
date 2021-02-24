@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+
+<!-- Mirrored from diyplugger.com/contact-us/ by HTTrack Website Copier/3.x [XR&CO'2014], Tue, 23 Feb 2021 11:02:54 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="profile" href="https://gmpg.org/xfn/11" />
+	<title>Contact Us</title>
+
+<!-- Async WordPress.com Remote Login -->
+<script id="wpcom_remote_login_js">
+var wpcom_remote_login_extra_auth = '';
+function wpcom_remote_login_remove_dom_node_id( element_id ) {
+	var dom_node = document.getElementById( element_id );
+	if ( dom_node ) { dom_node.parentNode.removeChild( dom_node ); }
+}
+function wpcom_remote_login_remove_dom_node_classes( class_name ) {
+	var dom_nodes = document.querySelectorAll( '.' + class_name );
+	for ( var i = 0; i < dom_nodes.length; i++ ) {
+		dom_nodes[ i ].parentNode.removeChild( dom_nodes[ i ] );
+	}
+}
+function wpcom_remote_login_final_cleanup() {
+	wpcom_remote_login_remove_dom_node_classes( "wpcom_remote_login_msg" );
+	wpcom_remote_login_remove_dom_node_id( "wpcom_remote_login_key" );
+	wpcom_remote_login_remove_dom_node_id( "wpcom_remote_login_validate" );
+	wpcom_remote_login_remove_dom_node_id( "wpcom_remote_login_js" );
+	wpcom_remote_login_remove_dom_node_id( "wpcom_request_access_iframe" );
+	wpcom_remote_login_remove_dom_node_id( "wpcom_request_access_styles" );
+}
+
+// Watch for messages back from the remote login
+window.addEventListener( "message", function( e ) {
+	if ( e.origin === "https://r-login.wordpress.com/" ) {
+		var data = {};
+		try {
+			data = JSON.parse( e.data );
+		} catch( e ) {
+			wpcom_remote_login_final_cleanup();
+			return;
+		}
+
+		if ( data.msg === 'LOGIN' ) {
+			// Clean up the login check iframe
+			wpcom_remote_login_remove_dom_node_id( "wpcom_remote_login_key" );
+
+			var id_regex = new RegExp( /^[0-9]+$/ );
+			var token_regex = new RegExp( /^.*|.*|.*$/ );
+			if (
+				token_regex.test( data.token )
+				&& id_regex.test( data.wpcomid )
+			) {
+				// We have everything we need to ask for a login
+				var script = document.createElement( "script" );
+				script.setAttribute( "id", "wpcom_remote_login_validate" );
+				script.src = '../remote-login4f98.html?wpcom_remote_login=validate'
+					+ '&wpcomid=' + data.wpcomid
+					+ '&token=' + encodeURIComponent( data.token )
+					+ '&host=' + window.location.protocol
+						+ '//' + window.location.hostname;
+				document.body.appendChild( script );
+			}
+
+			return;
+		}
+
+		// Safari ITP, not logged in, so redirect
+		if ( data.msg === 'LOGIN-REDIRECT' ) {
+			window.location = 'https://wordpress.com/log-in?redirect_to=' + window.location.href;
+			return;
+		}
+
+		// Safari ITP, storage access failed, remove the request
+		if ( data.msg === 'LOGIN-REMOVE' ) {
+			var css_zap = 'html { -webkit-transition: margin-top 1s; transition: margin-top 1s; } /* 9001 */ html { margin-top: 0 !important; } * html body { margin-top: 0 !important; } @media screen and ( max-width: 782px ) { html { margin-top: 0 !important; } * html body { margin-top: 0 !important; } }';
+			var style_zap = document.createElement( 'style' );
+			style_zap.type = 'text/css';
+			style_zap.appendChild( document.createTextNode( css_zap ) );
+			document.body.appendChild( style_zap );
+
+			var e = document.getElementById( 'wpcom_request_access_iframe' );
+			e.parentNode.removeChild( e );
+
+			document.cookie = 'wordpress_com_login_access=denied; path=/; max-age=31536000';
+
+			return;
+		}
+
+		// Safari ITP
+		if ( data.msg === 'REQUEST_ACCESS' ) {
+			console.log( 'request access: safari' );
+
+			// Check ITP iframe enable/disable knob
+			if ( wpcom_remote_login_extra_auth !== 'safari_itp_iframe' ) {
+				return;
+			}
+
+			// If we are in a "private window" there is no ITP.
+			var private_window = false;
+			try {
+				var opendb = window.openDatabase( null, null, null, null );
+			} catch( e ) {
+				private_window = true;
+			}
+
+			if ( private_window ) {
+				console.log( 'private window' );
+				return;
+			}
+
+			var iframe = document.createElement( 'iframe' );
+			iframe.id = 'wpcom_request_access_iframe';
+			iframe.setAttribute( 'scrolling', 'no' );
+			iframe.setAttribute( 'sandbox', 'allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-top-navigation-by-user-activation' );
+			iframe.src = 'https://r-login.wordpress.com/remote-login.php?wpcom_remote_login=request_access&amp;origin=' + encodeURIComponent( data.origin ) + '&wpcomid=' + encodeURIComponent( data.wpcomid );
+
+			var css = 'html { -webkit-transition: margin-top 1s; transition: margin-top 1s; } /* 9001 */ html { margin-top: 46px !important; } * html body { margin-top: 46px !important; } @media screen and ( max-width: 660px ) { html { margin-top: 71px !important; } * html body { margin-top: 71px !important; } #wpcom_request_access_iframe { display: block; height: 71px !important; } } #wpcom_request_access_iframe { border: 0px; height: 46px; position: fixed; top: 0; left: 0; width: 100%; min-width: 100%; z-index: 99999; background: #23282d; } ';
+
+			var style = document.createElement( 'style' );
+			style.type = 'text/css';
+			style.id = 'wpcom_request_access_styles';
+			style.appendChild( document.createTextNode( css ) );
+			document.body.appendChild( style );
+
+			document.body.appendChild( iframe );
+		}
+
+		if ( data.msg === 'DONE' ) {
+			wpcom_remote_login_final_cleanup();
+		}
+	}
+}, false );
+
+// Inject the remote login iframe after the page has had a chance to load
+// more critical resources
+window.addEventListener( "DOMContentLoaded", function( e ) {
+	var iframe = document.createElement( "iframe" );
+	iframe.style.display = "none";
+	iframe.setAttribute( "scrolling", "no" );
+	iframe.setAttribute( "id", "wpcom_remote_login_key" );
+	iframe.src = "https://r-login.wordpress.com/remote-login.php"
+		+ "?wpcom_remote_login=key"
+		+ "&origin=aHR0cHM6Ly9kaXlwbHVnZ2VyLmNvbQ%3D%3D"
+		+ "&wpcomid=188343997"
+		+ "&time=1614078173";
+	document.body.appendChild( iframe );
+}, false );
+</script>
+<link rel='dns-prefetch' href='http://s2.wp.com/' />
+<link rel='dns-prefetch' href='http://diyplugger.wordpress.com/' />
+<link rel='dns-prefetch' href='http://s0.wp.com/' />
+<link rel='dns-prefetch' href='http://wordpress.com/' />
+<link rel='dns-prefetch' href='http://fonts.googleapis.com/' />
+<link rel="alternate" type="application/rss+xml" title=" &raquo; Feed" href="../feed/index.html" />
+<link rel="alternate" type="application/rss+xml" title=" &raquo; Comments Feed" href="../comments/feed/index.html" />
+	<script type="text/javascript">
+		/* <![CDATA[ */
+		function addLoadEvent(func) {
+			var oldonload = window.onload;
+			if (typeof window.onload != 'function') {
+				window.onload = func;
+			} else {
+				window.onload = function () {
+					oldonload();
+					func();
+				}
+			}
+		}
+		/* ]]> */
+	</script>
+			<script>
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s0.wp.com\/wp-content\/mu-plugins\/wpcom-smileys\/twemoji\/2\/72x72\/","ext":".png","svgUrl":"https:\/\/s0.wp.com\/wp-content\/mu-plugins\/wpcom-smileys\/twemoji\/2\/svg\/","svgExt":".svg","source":{"concatemoji":"https:\/\/s2.wp.com\/wp-includes\/js\/wp-emoji-release.min.js?m=1612197847h&ver=5.6.2"}};
+			!function(e,a,t){var n,r,o,i=a.createElement("canvas"),p=i.getContext&&i.getContext("2d");function s(e,t){var a=String.fromCharCode;p.clearRect(0,0,i.width,i.height),p.fillText(a.apply(this,e),0,0);e=i.toDataURL();return p.clearRect(0,0,i.width,i.height),p.fillText(a.apply(this,t),0,0),e===i.toDataURL()}function c(e){var t=a.createElement("script");t.src=e,t.defer=t.type="text/javascript",a.getElementsByTagName("head")[0].appendChild(t)}for(o=Array("flag","emoji"),t.supports={everything:!0,everythingExceptFlag:!0},r=0;r<o.length;r++)t.supports[o[r]]=function(e){if(!p||!p.fillText)return!1;switch(p.textBaseline="top",p.font="600 32px Arial",e){case"flag":return s([127987,65039,8205,9895,65039],[127987,65039,8203,9895,65039])?!1:!s([55356,56826,55356,56819],[55356,56826,8203,55356,56819])&&!s([55356,57332,56128,56423,56128,56418,56128,56421,56128,56430,56128,56423,56128,56447],[55356,57332,8203,56128,56423,8203,56128,56418,8203,56128,56421,8203,56128,56430,8203,56128,56423,8203,56128,56447]);case"emoji":return!s([55357,56424,8205,55356,57212],[55357,56424,8203,55356,57212])}return!1}(o[r]),t.supports.everything=t.supports.everything&&t.supports[o[r]],"flag"!==o[r]&&(t.supports.everythingExceptFlag=t.supports.everythingExceptFlag&&t.supports[o[r]]);t.supports.everythingExceptFlag=t.supports.everythingExceptFlag&&!t.supports.flag,t.DOMReady=!1,t.readyCallback=function(){t.DOMReady=!0},t.supports.everything||(n=function(){t.readyCallback()},a.addEventListener?(a.addEventListener("DOMContentLoaded",n,!1),e.addEventListener("load",n,!1)):(e.attachEvent("onload",n),a.attachEvent("onreadystatechange",function(){"complete"===a.readyState&&t.readyCallback()})),(n=t.source||{}).concatemoji?c(n.concatemoji):n.wpemoji&&n.twemoji&&(c(n.twemoji),c(n.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script>
+		<style>
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style>
+	<link rel='stylesheet' id='all-css-0-1' href='https://s0.wp.com/_static/??-eJydkd1OwzAMhV+I1A3T0G4Qz5KkVvCWP8UOU9+etIVpwDQQN1F8fL5jJYZzUS4nwSQQmyqheUoM5+JyVBwp4PytGhzzA9zGAp2Q4YhSjDuptfph//T61kuL1fdORXjT4zAOGmyjMIENeQ2w1dQZWOaAfwhaqav5Zs5NlK80/TeiGqHk+Rfc5Q/scdgPO5iI5aKp2+jVpy3P73osRhZHxIkMBozddg/blmJtqcis+hmpRSWvHby7o04t0dt2oBu/KhtKkLJQp/lyWRov8Vk/6d3+oMeDPr4DuUPWTg==?cssminify=yes' type='text/css' media='all' />
+<style id='wp-block-library-inline-css'>
+.has-text-align-justify {
+	text-align:justify;
+}
+</style>
+<link crossorigin="anonymous" rel='stylesheet' id='seedlet-fonts-css'  href='https://fonts.googleapis.com/css?family=Fira+Sans%3Aital%2Cwght%400%2C400%3B0%2C500%3B1%2C400%7CPlayfair+Display%3Aital%2Cwght%400%2C400%3B0%2C700%3B1%2C400&amp;subset=latin%2Clatin-ext' media='all' />
+<link rel='stylesheet' id='all-css-2-1' href='../../s2.wp.com/wp-content/themes/pub/seedlet/styleaa62.css?m=1612889751h&amp;cssminify=yes' type='text/css' media='all' />
+<link rel='stylesheet' id='print-css-3-1' href='../../s1.wp.com/wp-content/themes/pub/seedlet/assets/css/print6296.css?m=1603804565h&amp;cssminify=yes' type='text/css' media='print' />
+<link rel='stylesheet' id='all-css-4-1' href='https://s2.wp.com/_static/??-eJx9jkEKAjEMRS9kDaOizkI8S1tjraZJmaQO3t5ZSUVw9x/8Bw/m6qKwIRvYDQsq1BZAES+EBpkjzDVKcWovwnVUXUGnlOYqtZRZIaE4kugtC3+Bu5LP0z91wkCSlplgeXX4I3WJgTw/XPT89AqfunM5Dfthe9gdN+N4fwODuVI2?cssminify=yes' type='text/css' media='all' />
+<style id='jetpack-global-styles-frontend-style-inline-css'>
+:root { --font-headings: unset; --font-base: unset; --font-headings-default: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif; --font-base-default: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;}
+</style>
+<link rel='stylesheet' id='all-css-6-1' href='https://s0.wp.com/_static/??-eJxti8sKgCAQAH8oW6KHdoi+xcTUWF1pjX4/OnSIOg0DM3BmYSgVmwrEQ2Q8XEgMmbiIFXXYgb3eQ3IPa8Ncwf/FZIJGgeToLZ+peBstg+/AIS0a72COU9OPUg69atV2AWWKN+I=?cssminify=yes' type='text/css' media='all' />
+<script id='wpcom-actionbar-placeholder-js-extra'>
+var actionbardata = {"siteID":"188343997","siteName":"diyplugger.com","siteURL":"https:\/\/diyplugger.com","icon":"<img alt='' src='https:\/\/s2.wp.com\/i\/logo\/wpcom-gray-white.png' class='avatar avatar-50' height='50' width='50' \/>","canManageOptions":"","canCustomizeSite":"","isFollowing":"","themeSlug":"pub\/blank-canvas","signupURL":"https:\/\/wordpress.com\/start\/","loginURL":"https:\/\/wordpress.com\/log-in?redirect_to=https%3A%2F%2Fdiyplugger.com%2Fcontact-us%2F&signup_flow=account&domain=diyplugger.com","themeURL":"https:\/\/wordpress.com\/theme\/blank-canvas\/","xhrURL":"https:\/\/diyplugger.com\/wp-admin\/admin-ajax.php","nonce":"68ca4ff9b9","isSingular":"1","isFolded":"","isLoggedIn":"","isMobile":"","subscribeNonce":"<input type=\"hidden\" id=\"_wpnonce\" name=\"_wpnonce\" value=\"720a853973\" \/>","referer":"https:\/\/diyplugger.com\/contact-us\/","canFollow":"","feedID":"112957684","statusMessage":"","customizeLink":"https:\/\/diyplugger.wordpress.com\/wp-admin\/customize.php?url=https%3A%2F%2Fdiyplugger.wordpress.com%2Fcontact-us%2F","postID":"135","shortlink":"https:\/\/wp.me\/PcKgSp-2b","canEditPost":"","editLink":"https:\/\/wordpress.com\/page\/diyplugger.com\/135","statsLink":"https:\/\/wordpress.com\/stats\/post\/135\/diyplugger.com","i18n":{"view":"View site","follow":"Follow","following":"Following","edit":"Edit","login":"Log in","signup":"Sign up","customize":"Customize","report":"Report this content","themeInfo":"Get theme: Blank Canvas","shortlink":"Copy shortlink","copied":"Copied","followedText":"New posts from this site will now appear in your <a href=\"https:\/\/wordpress.com\/read\">Reader<\/a>","foldBar":"Collapse this bar","unfoldBar":"Expand this bar","editSubs":"Manage subscriptions","viewReader":"View site in Reader","viewReadPost":"View post in Reader","subscribe":"Sign me up","enterEmail":"Enter your email address","followers":"","alreadyUser":"Already have a WordPress.com account? <a href=\"https:\/\/wordpress.com\/log-in?redirect_to=https%3A%2F%2Fdiyplugger.com%2Fcontact-us%2F&signup_flow=account&domain=diyplugger.com\">Log in now.<\/a>","stats":"Stats"}};
+</script>
+<script type='text/javascript' src='https://s2.wp.com/_static/??-eJyFyk0KgCAQQOELZaKB0SI6i9UkIzqWP0S3z8B9qwePj98n2wJloMxt4j6s6ICVBFGb+hjSEXqbOl4d0ubKDumD9ioQn5beI/0i5tFEnaHhxc9CCTmMclLSvnPgMRs='></script>
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="https://diyplugger.wordpress.com/xmlrpc.php?rsd" />
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="https://s1.wp.com/wp-includes/wlwmanifest.xml" /> 
+<meta name="generator" content="WordPress.com" />
+<link rel="canonical" href="index.html" />
+<link rel='shortlink' href='https://wp.me/PcKgSp-2b' />
+<link rel="alternate" type="application/json+oembed" href="https://public-api.wordpress.com/oembed/?format=json&amp;url=https%3A%2F%2Fdiyplugger.com%2Fcontact-us%2F&amp;for=wpcom-auto-discovery" /><link rel="alternate" type="application/xml+oembed" href="https://public-api.wordpress.com/oembed/?format=xml&amp;url=https%3A%2F%2Fdiyplugger.com%2Fcontact-us%2F&amp;for=wpcom-auto-discovery" />
+<!-- Jetpack Open Graph Tags -->
+<meta property="og:type" content="article" />
+<meta property="og:title" content="Contact Us" />
+<meta property="og:url" content="https://diyplugger.com/contact-us/" />
+<meta property="og:description" content="Get in Touch. Don’t hesitate to reach out with the contact information below, or send a message using the form. © 2021 DIY Plugger | All Rights Reserved | Privacy Policy | Terms Of Service | Contac…" />
+<meta property="article:published_time" content="2021-01-23T17:30:31+00:00" />
+<meta property="article:modified_time" content="2021-01-24T21:44:28+00:00" />
+<meta property="og:image" content="https://s0.wp.com/i/blank.jpg" />
+<meta property="og:locale" content="en_US" />
+<meta name="twitter:site" content="@wordpressdotcom" />
+<meta name="twitter:text:title" content="Contact Us" />
+<meta name="twitter:card" content="summary" />
+<meta property="article:publisher" content="https://www.facebook.com/WordPresscom" />
+
+<!-- End Jetpack Open Graph Tags -->
+<link rel="shortcut icon" type="image/x-icon" href="https://s1.wp.com/i/favicon.ico" sizes="16x16 24x24 32x32 48x48" />
+<link rel="icon" type="image/x-icon" href="https://s1.wp.com/i/favicon.ico" sizes="16x16 24x24 32x32 48x48" />
+<link rel="apple-touch-icon" href="../../s2.wp.com/i/webclip.png" />
+<link rel="search" type="application/opensearchdescription+xml" href="../osd.xml" title="" />
+<link rel="search" type="application/opensearchdescription+xml" href="https://s1.wp.com/opensearch.xml" title="WordPress.com" />
+<meta name="application-name" content="WordPress.com" /><meta name="msapplication-window" content="width=device-width;height=device-height" /><meta name="msapplication-task" content="name=Subscribe;action-uri=https://diyplugger.com/feed/;icon-uri=https://s1.wp.com/i/favicon.ico" /><meta name="msapplication-task" content="name=Sign up for a free blog;action-uri=http://wordpress.com/signup/;icon-uri=https://s1.wp.com/i/favicon.ico" /><meta name="msapplication-task" content="name=WordPress.com Support;action-uri=http://support.wordpress.com/;icon-uri=https://s1.wp.com/i/favicon.ico" /><meta name="msapplication-task" content="name=WordPress.com Forums;action-uri=http://forums.wordpress.com/;icon-uri=https://s1.wp.com/i/favicon.ico" /><meta name="description" content="Get in Touch. Don’t hesitate to reach out with the contact information below, or send a message using the form. © 2021 DIY Plugger | All Rights Reserved | Privacy Policy | Terms Of Service | Contact Us" />
+<style type="text/css" id="custom-colors-css">
+	:root,
+	#editor .editor-styles-wrapper {
+		--global--color-background: #fcecd3;
+		--global--color-foreground: #444444;
+		--global--color-foreground-low-contrast: hsl( NAN,0%,36.666666666667%);
+		--global--color-foreground-high-contrast: hsl( NAN,0%,16.666666666667%);
+		--global--color-primary: #000000;
+		--global--color-primary-hover: hsl( 0,0%,10%);
+		--global--color-secondary: #007cba;
+		--global--color-secondary-hover: hsl( 200,100%,82.941176470588%);
+		--global--color-tertiary: #fafafa;
+	}
+
+	.global--color-background { background-color: #fcecd3;}
+.global--color-foreground { color: #444444;}
+.global--color-primary { color: #000000;}
+.global--color-secondary { color: #007cba;}
+.global--color-tertiary { color: #fafafa;}
+</style>
+		<!-- Jetpack Google Analytics -->
+		<script async src='https://www.googletagmanager.com/gtag/js?id=G-S6HQCJTG2X'></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push( arguments ); }
+			gtag( 'js', new Date() );
+			gtag( 'config', "G-S6HQCJTG2X" );
+					</script>
+		<!-- End Jetpack Google Analytics -->
+		</head>
+
+<body class="page-template-default page page-id-135 wp-embed-responsive customizer-styles-applied hide-post-and-page-titles hide-site-footer hide-comments singular highlander-enabled highlander-light custom-colors">
+<div id="page" class="site">
+	<a class="skip-link screen-reader-text" href="#content">Skip to content</a>
+
+	
+
+	<div id="content" class="site-content">
+
+	<section id="primary" class="content-area">
+		<main id="main" class="site-main" role="main">
+
+			
+<article id="post-135" class="post-135 page type-page status-publish hentry entry">
+	
+	
+	<div class="entry-content">
+		
+<div class="wp-block-group alignfull has-text-color has-background" style="background-color:#1f1e1e;color:#ffffff;"><div class="wp-block-group__inner-container">
+<div style="height:64px;" aria-hidden="true" class="wp-block-spacer"></div>
+
+
+
+<div class="wp-block-columns alignwide margin-bottom-none">
+<div class="wp-block-column">
+<h2 class="margin-bottom-none" style="font-size:60px;">Get in Touch.</h2>
+
+
+
+<p class="margin-top-half" style="font-size:18px;">Don’t hesitate to reach out with the contact information below, or send a message using the form.</p>
+</div>
+
+
+
+<div class="wp-block-column"></div>
+</div>
+
+
+
+<div class="wp-block-columns alignwide margin-top-none">
+<div class="wp-block-column">
+<div style="height:20px;" aria-hidden="true" class="wp-block-spacer"></div>
+
+
+<div id='contact-form-135'>
+<form action='https://diyplugger.com/contact-us/#contact-form-135' method='post' class='contact-form commentsblock wp-block-jetpack-contact-form'>
+
+
+<div class='grunion-field-wrap grunion-field-name-wrap'  >
+<label
+				for='g135-name'
+				class='grunion-field-label name'
+				>Name<span>(required)</span></label>
+<input
+					type='text'
+					name='g135-name'
+					id='g135-name'
+					value=''
+					class='name' 
+					required aria-required='true'
+				/>
+	</div>
+
+
+
+<div class='grunion-field-wrap grunion-field-email-wrap'  >
+<label
+				for='g135-email'
+				class='grunion-field-label email'
+				>Email<span>(required)</span></label>
+<input
+					type='email'
+					name='g135-email'
+					id='g135-email'
+					value=''
+					class='email' 
+					required aria-required='true'
+				/>
+	</div>
+
+
+
+<div class='grunion-field-wrap grunion-field-textarea-wrap'  >
+<label
+				for='contact-form-comment-g135-message'
+				class='grunion-field-label textarea'
+				>Message<span>(required)</span></label>
+<textarea
+		                name='g135-message'
+		                id='contact-form-comment-g135-message'
+		                rows='20' class='textarea'  required aria-required='true'></textarea>
+	</div>
+
+
+<div class="wp-block-jetpack-button wp-block-button"><button class="wp-block-button__link has-text-color has-background" style="color: #000000; background-color: #ffb605;" data-id-attr="placeholder" type="submit">Submit</button></div>
+		<input type='hidden' name='contact-form-id' value='135' />
+		<input type='hidden' name='action' value='grunion-contact-form' />
+		<input type='hidden' name='contact-form-hash' value='cb2de7bed52a7c59eedf8ada13b170dc9d85df1f' />
+</form>
+</div></div>
+
+
+
+<div class="wp-block-column"></div>
+</div>
+
+
+
+<div style="height:20px;" aria-hidden="true" class="wp-block-spacer"></div>
+</div></div>
+
+
+
+<div class="wp-block-group alignfull has-secondary-background-color has-background"><div class="wp-block-group__inner-container">
+<p class="has-text-align-center has-text-color" style="color:#f9ec03;"><span style="color:#FFFFFF;" class="has-inline-color">© 2021 DIY Plugger</span><span class="has-inline-color has-black-color"> </span><span style="color:#FFFFFF;" class="has-inline-color">|</span><span class="has-inline-color has-black-color"> </span><span style="color:#FFFFFF;" class="has-inline-color">All Rights Reserved</span><span class="has-inline-color has-black-color"> </span><span style="color:#FFFFFF;" class="has-inline-color">|</span><span class="has-inline-color has-black-color"> </span><a rel="noreferrer noopener" href="https://www.privacypolicytemplate.net/live.php?token=B2ldcnscgdSgRDINN4GiKSldbROOCKfg" target="_blank"><span style="color:#FFFFFF;" class="has-inline-color">Privacy Policy</span></a><span style="color:#FFFFFF;" class="has-inline-color"> | </span><a rel="noreferrer noopener" href="https://www.termsservicetemplate.com/live.php?token=QC8AmSoSFCNRoIMm8tKnAK2gqpimoXAS" target="_blank"><span style="color:#FFFFFF;" class="has-inline-color">Terms Of Service</span></a><span class="has-inline-color has-black-color"><a rel="noreferrer noopener" href="https://www.termsservicetemplate.com/live.php?token=QC8AmSoSFCNRoIMm8tKnAK2gqpimoXAS" target="_blank"> </a></span><span style="color:#FFFFFF;" class="has-inline-color">| </span><a href="../indexed66.html?page_id=135"><span style="color:#FFFFFF;" class="has-inline-color">Contact Us</span></a></p>
+</div></div>
+
+
+
+<p></p>
+<div id="jp-post-flair" class="sharedaddy sd-like-enabled sd-sharing-enabled"><div class="sharedaddy sd-sharing-enabled"><div class="robots-nocontent sd-block sd-social sd-social-icon-text sd-sharing"><h3 class="sd-title">Share this:</h3><div class="sd-content"><ul><li class="share-twitter"><a rel="nofollow noopener noreferrer" data-shared="sharing-twitter-135" class="share-twitter sd-button share-icon" href="index9a7b.html?share=twitter" target="_blank" title="Click to share on Twitter"><span>Twitter</span></a></li><li class="share-facebook"><a rel="nofollow noopener noreferrer" data-shared="sharing-facebook-135" class="share-facebook sd-button share-icon" href="index5a58.html?share=facebook" target="_blank" title="Click to share on Facebook"><span>Facebook</span></a></li><li class="share-end"></li></ul></div></div></div><div class='sharedaddy sd-block sd-like jetpack-likes-widget-wrapper jetpack-likes-widget-unloaded' id='like-post-wrapper-188343997-135-6034e0ddf380d' data-src='//widgets.wp.com/likes/index.html?ver=20200826#blog_id=188343997&amp;post_id=135&amp;origin=diyplugger.wordpress.com&amp;obj_id=188343997-135-6034e0ddf380d&amp;domain=diyplugger.com' data-name='like-post-frame-188343997-135-6034e0ddf380d'><h3 class='sd-title'>Like this:</h3><div class='likes-widget-placeholder post-likes-widget-placeholder' style='height: 55px;'><span class='button'><span>Like</span></span> <span class="loading">Loading...</span></div><span class='sd-text-color'></span><a class='sd-link-color'></a></div></div>	</div><!-- .entry-content -->
+
+</article><!-- #post-${ID} -->
+
+		</main><!-- #main -->
+	</section><!-- #primary -->
+
+
+	</div><!-- #content -->
+
+	<footer id="colophon" class="site-footer default-max-width" role="contentinfo" aria-label="Footer">
+		
+<div class="site-info">
+			<a href="https://wordpress.com/?ref=footer_custom_powered" rel="nofollow">Website Powered by WordPress.com</a>.
+	</div><!-- .site-info -->
+	</footer><!-- #colophon -->
+
+</div><!-- #page -->
+
+<!--  -->
+<script src='../../0.gravatar.com/js/gprofiles1961.js?ver=202108y' id='grofiles-cards-js'></script>
+<script id='wpgroho-js-extra'>
+var WPGroHo = {"my_hash":""};
+</script>
+<script type='text/javascript' src='../../s1.wp.com/wp-content/mu-plugins/gravatar-hovercards/wpgrohodc5c.js?m=1610363240h'></script>
+
+	<script>
+		// Initialize and attach hovercards to all gravatars
+		( function() {
+			function init() {
+				if ( typeof Gravatar === 'undefined' ) {
+					return;
+				}
+
+				if ( typeof Gravatar.init !== 'function' ) {
+					return;
+				}
+
+				Gravatar.profile_cb = function ( hash, id ) {
+					WPGroHo.syncProfileData( hash, id );
+				};
+
+				Gravatar.my_hash = WPGroHo.my_hash;
+				Gravatar.init( 'body', '#wp-admin-bar-my-account' );
+			}
+
+			if ( document.readyState !== 'loading' ) {
+				init();
+			} else {
+				document.addEventListener( 'DOMContentLoaded', init );
+			}
+		} )();
+	</script>
+
+		<div style="display:none">
+	</div>
+
+<script>
+window.addEventListener( "load", function( event ) {
+	var link = document.createElement( "link" );
+	link.href = "../../s0.wp.com/wp-content/mu-plugins/actionbar/actionbar61ea.css?v=20201002";
+	link.type = "text/css";
+	link.rel = "stylesheet";
+	document.head.appendChild( link );
+
+	var script = document.createElement( "script" );
+	script.src = "../../s0.wp.com/wp-content/mu-plugins/actionbar/actionbar61ea.js?v=20201002";
+	script.defer = true;
+	document.body.appendChild( script );
+} );
+</script>
+
+	
+	<script type="text/javascript">
+		window.WPCOM_sharing_counts = {"https:\/\/diyplugger.com\/contact-us\/":135};
+	</script>
+				<link rel='stylesheet' id='all-css-0-2' href='../../s0.wp.com/wp-content/mu-plugins/grunion-contact-form/css/grunionbdb9.css?m=1597852966h&amp;cssminify=yes' type='text/css' media='all' />
+<script id='comment-like-js-extra'>
+var comment_like_text = {"loading":"Loading..."};
+</script>
+<script id='sharing-js-js-extra'>
+var sharing_js_options = {"lang":"en","counts":"1","is_stats_active":"1"};
+</script>
+<script type='text/javascript' src='https://s1.wp.com/_static/??-eJyFkNEOgjAMRX/IWQnB+GL8lgEVOrYx1w3Ur3dEfSCY+dTm3nvatDA70Yw2oA2gGFqcqEF33yvewdpyIweDzLLDH666RfSPT9mTnQjnvzGFwclmEB6ZnpupJgqnY0eWQdOADAmK2EvbavSZcDMakyTxhtRC18AzudyGDbQSMqBsDVlRSw9GckCfOhF8uioHLb8UVy3JA/fSk+2+NUEXcy6ORXGoqrI8qRfg45wK'></script>
+<script type='text/javascript'>
+var windowOpen;
+			( function () {
+				function matches( el, sel ) {
+					return !! (
+						el.matches && el.matches( sel ) ||
+						el.msMatchesSelector && el.msMatchesSelector( sel )
+					);
+				}
+
+				document.body.addEventListener( 'click', function ( event ) {
+					if ( ! event.target ) {
+						return;
+					}
+
+					var el;
+					if ( matches( event.target, 'a.share-twitter' ) ) {
+						el = event.target;
+					} else if ( event.target.parentNode && matches( event.target.parentNode, 'a.share-twitter' ) ) {
+						el = event.target.parentNode;
+					}
+
+					if ( el ) {
+						event.preventDefault();
+
+						// If there's another sharing window open, close it.
+						if ( typeof windowOpen !== 'undefined' ) {
+							windowOpen.close();
+						}
+						windowOpen = window.open( el.getAttribute( 'href' ), 'wpcomtwitter', 'menubar=1,resizable=1,width=600,height=350' );
+						return false;
+					}
+				} );
+			} )();
+var windowOpen;
+			( function () {
+				function matches( el, sel ) {
+					return !! (
+						el.matches && el.matches( sel ) ||
+						el.msMatchesSelector && el.msMatchesSelector( sel )
+					);
+				}
+
+				document.body.addEventListener( 'click', function ( event ) {
+					if ( ! event.target ) {
+						return;
+					}
+
+					var el;
+					if ( matches( event.target, 'a.share-facebook' ) ) {
+						el = event.target;
+					} else if ( event.target.parentNode && matches( event.target.parentNode, 'a.share-facebook' ) ) {
+						el = event.target.parentNode;
+					}
+
+					if ( el ) {
+						event.preventDefault();
+
+						// If there's another sharing window open, close it.
+						if ( typeof windowOpen !== 'undefined' ) {
+							windowOpen.close();
+						}
+						windowOpen = window.open( el.getAttribute( 'href' ), 'wpcomfacebook', 'menubar=1,resizable=1,width=600,height=400' );
+						return false;
+					}
+				} );
+			} )();
+</script>
+	<script>
+	/(trident|msie)/i.test(navigator.userAgent)&&document.getElementById&&window.addEventListener&&window.addEventListener("hashchange",function(){var t,e=location.hash.substring(1);/^[A-z0-9_-]+$/.test(e)&&(t=document.getElementById(e))&&(/^(?:a|select|input|button|textarea)$/i.test(t.tagName)||(t.tabIndex=-1),t.focus())},!1);
+	</script>
+	<script type="text/javascript">
+// <![CDATA[
+(function() {
+try{
+  if ( window.external &&'msIsSiteMode' in window.external) {
+    if (window.external.msIsSiteMode()) {
+      var jl = document.createElement('script');
+      jl.type='text/javascript';
+      jl.async=true;
+      jl.src='../wp-content/plugins/ie-sitemode/custom-jumplist.php';
+      var s = document.getElementsByTagName('script')[0];
+      s.parentNode.insertBefore(jl, s);
+    }
+  }
+}catch(e){}
+})();
+// ]]>
+</script>		<iframe src='https://widgets.wp.com/likes/master.html?ver=20200826#ver=20200826' scrolling='no' id='likes-master' name='likes-master' style='display:none;'></iframe>
+		<div id='likes-other-gravatars'><div class="likes-text"><span>%d</span> bloggers like this:</div><ul class="wpl-avatars sd-like-gravatars"></ul></div>
+<script src="../../stats.wp.com/w7f39.js?61" defer></script> <script type="text/javascript">
+_tkq = window._tkq || [];
+_stq = window._stq || [];
+_tkq.push(['storeContext', {'blog_id':'188343997','blog_tz':'-5','user_lang':'en','blog_lang':'en','user_id':'0'}]);
+_stq.push(['view', {'blog':'188343997','v':'wpcom','tz':'-5','user_id':'0','post':'135','subd':'diyplugger'}]);
+_stq.push(['extra', {'crypt':'UE40eW5QN0p8M2Y/RE1TaVhzUzFMbjdWNHpwZGhTayxPSUFCMGNrd29+Smw0TDhnZmRTK0hlRi9QSGh6bi9GXVhBJWIlZlR5U1JMLU8/MkNtblkvY1czSy53aTEvRFZyLH5MUmdVVGEyTlFJP35mNjdGSXk/QnE/PTdySX5hZXFtLW4ra19QJks/TnBnRURaVFtveDhCTFdmZDFGPz9xX3AwPUpnQjhyViY/UWNDLGNWdVMlRzl+LUpsJTU3dWcxUi9YcXx1ZGtJbmN2VkxDMGwwRFZVLC9nYTV3SCxEc1Nham5Yck4lLVRaVDA5NmRfbXlKS3I4Y0Z+JVJRNH4tfC1Q'}]);
+_stq.push([ 'clickTrackerInit', '188343997', '135' ]);
+	</script>
+<noscript><img src="../../pixel.wp.com/b0b80.gif?v=noscript" style="height:1px;width:1px;overflow:hidden;position:absolute;bottom:1px;" alt="" /></noscript>
+<script>
+if ( 'object' === typeof wpcom_mobile_user_agent_info ) {
+
+	wpcom_mobile_user_agent_info.init();
+	var mobileStatsQueryString = "";
+	
+	if( false !== wpcom_mobile_user_agent_info.matchedPlatformName )
+		mobileStatsQueryString += "&x_" + 'mobile_platforms' + '=' + wpcom_mobile_user_agent_info.matchedPlatformName;
+	
+	if( false !== wpcom_mobile_user_agent_info.matchedUserAgentName )
+		mobileStatsQueryString += "&x_" + 'mobile_devices' + '=' + wpcom_mobile_user_agent_info.matchedUserAgentName;
+	
+	if( wpcom_mobile_user_agent_info.isIPad() )
+		mobileStatsQueryString += "&x_" + 'ipad_views' + '=' + 'views';
+
+	if( "" != mobileStatsQueryString ) {
+		new Image().src = document.location.protocol + '//pixel.wp.com/g.gif?v=wpcom-no-pv' + mobileStatsQueryString + '&baba=' + Math.random();
+	}
+	
+}
+</script>
+</body>
+
+<!-- Mirrored from diyplugger.com/contact-us/ by HTTrack Website Copier/3.x [XR&CO'2014], Tue, 23 Feb 2021 11:02:54 GMT -->
+</html>

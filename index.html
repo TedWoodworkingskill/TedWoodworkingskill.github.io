@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="en">
+
+<!-- Mirrored from diyplugger.com/ by HTTrack Website Copier/3.x [XR&CO'2014], Tue, 23 Feb 2021 11:02:45 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="profile" href="https://gmpg.org/xfn/11" />
+	<title></title>
+
+<!-- Async WordPress.com Remote Login -->
+<script id="wpcom_remote_login_js">
+var wpcom_remote_login_extra_auth = '';
+function wpcom_remote_login_remove_dom_node_id( element_id ) {
+	var dom_node = document.getElementById( element_id );
+	if ( dom_node ) { dom_node.parentNode.removeChild( dom_node ); }
+}
+function wpcom_remote_login_remove_dom_node_classes( class_name ) {
+	var dom_nodes = document.querySelectorAll( '.' + class_name );
+	for ( var i = 0; i < dom_nodes.length; i++ ) {
+		dom_nodes[ i ].parentNode.removeChild( dom_nodes[ i ] );
+	}
+}
+function wpcom_remote_login_final_cleanup() {
+	wpcom_remote_login_remove_dom_node_classes( "wpcom_remote_login_msg" );
+	wpcom_remote_login_remove_dom_node_id( "wpcom_remote_login_key" );
+	wpcom_remote_login_remove_dom_node_id( "wpcom_remote_login_validate" );
+	wpcom_remote_login_remove_dom_node_id( "wpcom_remote_login_js" );
+	wpcom_remote_login_remove_dom_node_id( "wpcom_request_access_iframe" );
+	wpcom_remote_login_remove_dom_node_id( "wpcom_request_access_styles" );
+}
+
+// Watch for messages back from the remote login
+window.addEventListener( "message", function( e ) {
+	if ( e.origin === "https://r-login.wordpress.com/" ) {
+		var data = {};
+		try {
+			data = JSON.parse( e.data );
+		} catch( e ) {
+			wpcom_remote_login_final_cleanup();
+			return;
+		}
+
+		if ( data.msg === 'LOGIN' ) {
+			// Clean up the login check iframe
+			wpcom_remote_login_remove_dom_node_id( "wpcom_remote_login_key" );
+
+			var id_regex = new RegExp( /^[0-9]+$/ );
+			var token_regex = new RegExp( /^.*|.*|.*$/ );
+			if (
+				token_regex.test( data.token )
+				&& id_regex.test( data.wpcomid )
+			) {
+				// We have everything we need to ask for a login
+				var script = document.createElement( "script" );
+				script.setAttribute( "id", "wpcom_remote_login_validate" );
+				script.src = 'remote-login4f98.html?wpcom_remote_login=validate'
+					+ '&wpcomid=' + data.wpcomid
+					+ '&token=' + encodeURIComponent( data.token )
+					+ '&host=' + window.location.protocol
+						+ '//' + window.location.hostname;
+				document.body.appendChild( script );
+			}
+
+			return;
+		}
+
+		// Safari ITP, not logged in, so redirect
+		if ( data.msg === 'LOGIN-REDIRECT' ) {
+			window.location = 'https://wordpress.com/log-in?redirect_to=' + window.location.href;
+			return;
+		}
+
+		// Safari ITP, storage access failed, remove the request
+		if ( data.msg === 'LOGIN-REMOVE' ) {
+			var css_zap = 'html { -webkit-transition: margin-top 1s; transition: margin-top 1s; } /* 9001 */ html { margin-top: 0 !important; } * html body { margin-top: 0 !important; } @media screen and ( max-width: 782px ) { html { margin-top: 0 !important; } * html body { margin-top: 0 !important; } }';
+			var style_zap = document.createElement( 'style' );
+			style_zap.type = 'text/css';
+			style_zap.appendChild( document.createTextNode( css_zap ) );
+			document.body.appendChild( style_zap );
+
+			var e = document.getElementById( 'wpcom_request_access_iframe' );
+			e.parentNode.removeChild( e );
+
+			document.cookie = 'wordpress_com_login_access=denied; path=/; max-age=31536000';
+
+			return;
+		}
+
+		// Safari ITP
+		if ( data.msg === 'REQUEST_ACCESS' ) {
+			console.log( 'request access: safari' );
+
+			// Check ITP iframe enable/disable knob
+			if ( wpcom_remote_login_extra_auth !== 'safari_itp_iframe' ) {
+				return;
+			}
+
+			// If we are in a "private window" there is no ITP.
+			var private_window = false;
+			try {
+				var opendb = window.openDatabase( null, null, null, null );
+			} catch( e ) {
+				private_window = true;
+			}
+
+			if ( private_window ) {
+				console.log( 'private window' );
+				return;
+			}
+
+			var iframe = document.createElement( 'iframe' );
+			iframe.id = 'wpcom_request_access_iframe';
+			iframe.setAttribute( 'scrolling', 'no' );
+			iframe.setAttribute( 'sandbox', 'allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-top-navigation-by-user-activation' );
+			iframe.src = 'https://r-login.wordpress.com/remote-login.php?wpcom_remote_login=request_access&amp;origin=' + encodeURIComponent( data.origin ) + '&wpcomid=' + encodeURIComponent( data.wpcomid );
+
+			var css = 'html { -webkit-transition: margin-top 1s; transition: margin-top 1s; } /* 9001 */ html { margin-top: 46px !important; } * html body { margin-top: 46px !important; } @media screen and ( max-width: 660px ) { html { margin-top: 71px !important; } * html body { margin-top: 71px !important; } #wpcom_request_access_iframe { display: block; height: 71px !important; } } #wpcom_request_access_iframe { border: 0px; height: 46px; position: fixed; top: 0; left: 0; width: 100%; min-width: 100%; z-index: 99999; background: #23282d; } ';
+
+			var style = document.createElement( 'style' );
+			style.type = 'text/css';
+			style.id = 'wpcom_request_access_styles';
+			style.appendChild( document.createTextNode( css ) );
+			document.body.appendChild( style );
+
+			document.body.appendChild( iframe );
+		}
+
+		if ( data.msg === 'DONE' ) {
+			wpcom_remote_login_final_cleanup();
+		}
+	}
+}, false );
+
+// Inject the remote login iframe after the page has had a chance to load
+// more critical resources
+window.addEventListener( "DOMContentLoaded", function( e ) {
+	var iframe = document.createElement( "iframe" );
+	iframe.style.display = "none";
+	iframe.setAttribute( "scrolling", "no" );
+	iframe.setAttribute( "id", "wpcom_remote_login_key" );
+	iframe.src = "https://r-login.wordpress.com/remote-login.php"
+		+ "?wpcom_remote_login=key"
+		+ "&origin=aHR0cHM6Ly9kaXlwbHVnZ2VyLmNvbQ%3D%3D"
+		+ "&wpcomid=188343997"
+		+ "&time=1614078165";
+	document.body.appendChild( iframe );
+}, false );
+</script>
+<link rel='dns-prefetch' href='http://s2.wp.com/' />
+<link rel='dns-prefetch' href='http://diyplugger.wordpress.com/' />
+<link rel='dns-prefetch' href='http://s0.wp.com/' />
+<link rel='dns-prefetch' href='http://wordpress.com/' />
+<link rel='dns-prefetch' href='http://fonts.googleapis.com/' />
+<link rel="alternate" type="application/rss+xml" title=" &raquo; Feed" href="feed/index.html" />
+<link rel="alternate" type="application/rss+xml" title=" &raquo; Comments Feed" href="comments/feed/index.html" />
+	<script type="text/javascript">
+		/* <![CDATA[ */
+		function addLoadEvent(func) {
+			var oldonload = window.onload;
+			if (typeof window.onload != 'function') {
+				window.onload = func;
+			} else {
+				window.onload = function () {
+					oldonload();
+					func();
+				}
+			}
+		}
+		/* ]]> */
+	</script>
+			<script>
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s0.wp.com\/wp-content\/mu-plugins\/wpcom-smileys\/twemoji\/2\/72x72\/","ext":".png","svgUrl":"https:\/\/s0.wp.com\/wp-content\/mu-plugins\/wpcom-smileys\/twemoji\/2\/svg\/","svgExt":".svg","source":{"concatemoji":"https:\/\/s2.wp.com\/wp-includes\/js\/wp-emoji-release.min.js?m=1612197847h&ver=5.6.2"}};
+			!function(e,a,t){var n,r,o,i=a.createElement("canvas"),p=i.getContext&&i.getContext("2d");function s(e,t){var a=String.fromCharCode;p.clearRect(0,0,i.width,i.height),p.fillText(a.apply(this,e),0,0);e=i.toDataURL();return p.clearRect(0,0,i.width,i.height),p.fillText(a.apply(this,t),0,0),e===i.toDataURL()}function c(e){var t=a.createElement("script");t.src=e,t.defer=t.type="text/javascript",a.getElementsByTagName("head")[0].appendChild(t)}for(o=Array("flag","emoji"),t.supports={everything:!0,everythingExceptFlag:!0},r=0;r<o.length;r++)t.supports[o[r]]=function(e){if(!p||!p.fillText)return!1;switch(p.textBaseline="top",p.font="600 32px Arial",e){case"flag":return s([127987,65039,8205,9895,65039],[127987,65039,8203,9895,65039])?!1:!s([55356,56826,55356,56819],[55356,56826,8203,55356,56819])&&!s([55356,57332,56128,56423,56128,56418,56128,56421,56128,56430,56128,56423,56128,56447],[55356,57332,8203,56128,56423,8203,56128,56418,8203,56128,56421,8203,56128,56430,8203,56128,56423,8203,56128,56447]);case"emoji":return!s([55357,56424,8205,55356,57212],[55357,56424,8203,55356,57212])}return!1}(o[r]),t.supports.everything=t.supports.everything&&t.supports[o[r]],"flag"!==o[r]&&(t.supports.everythingExceptFlag=t.supports.everythingExceptFlag&&t.supports[o[r]]);t.supports.everythingExceptFlag=t.supports.everythingExceptFlag&&!t.supports.flag,t.DOMReady=!1,t.readyCallback=function(){t.DOMReady=!0},t.supports.everything||(n=function(){t.readyCallback()},a.addEventListener?(a.addEventListener("DOMContentLoaded",n,!1),e.addEventListener("load",n,!1)):(e.attachEvent("onload",n),a.attachEvent("onreadystatechange",function(){"complete"===a.readyState&&t.readyCallback()})),(n=t.source||{}).concatemoji?c(n.concatemoji):n.wpemoji&&n.twemoji&&(c(n.twemoji),c(n.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script>
+		<style>
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style>
+	<link rel='stylesheet' id='all-css-0-1' href='https://s2.wp.com/_static/??-eJydkN1OAyEQhV9Idhabmt4YnwXYCZ2WvzCDzb69YG1Tq1HjDeGcme8QDpyKcjkJJoHYVAnNU2I4FZej4kgB1zs1OeYHuMEujG9dWqy+TyrCq56nedJgG4UFbMjuqALZauoKLGvAPwS9UwwHlGIGbtbcRPlKy38jqhFKnn/BXf7AHqfttIGFWK6e+h69KW98v/uxGBkbERcyGDD2tZ+wc8vWlorMqp+RWlSy7+DX0j89F0d0L/eIXfGdc0YJUhbqNF8vY/ASn/WT3mx3et7pwxuUh8SQ?cssminify=yes' type='text/css' media='all' />
+<style id='wp-block-library-inline-css'>
+.has-text-align-justify {
+	text-align:justify;
+}
+</style>
+<link crossorigin="anonymous" rel='stylesheet' id='seedlet-fonts-css'  href='https://fonts.googleapis.com/css?family=Fira+Sans%3Aital%2Cwght%400%2C400%3B0%2C500%3B1%2C400%7CPlayfair+Display%3Aital%2Cwght%400%2C400%3B0%2C700%3B1%2C400&amp;subset=latin%2Clatin-ext' media='all' />
+<link rel='stylesheet' id='all-css-2-1' href='../s2.wp.com/wp-content/themes/pub/seedlet/styleaa62.css?m=1612889751h&amp;cssminify=yes' type='text/css' media='all' />
+<link rel='stylesheet' id='print-css-3-1' href='../s1.wp.com/wp-content/themes/pub/seedlet/assets/css/print6296.css?m=1603804565h&amp;cssminify=yes' type='text/css' media='print' />
+<link rel='stylesheet' id='all-css-4-1' href='https://s2.wp.com/_static/??-eJx9jkEKAjEMRS9kDaOizkI8S1tjraZJmaQO3t5ZSUVw9x/8Bw/m6qKwIRvYDQsq1BZAES+EBpkjzDVKcWovwnVUXUGnlOYqtZRZIaE4kugtC3+Bu5LP0z91wkCSlplgeXX4I3WJgTw/XPT89AqfunM5Dfthe9gdN+N4fwODuVI2?cssminify=yes' type='text/css' media='all' />
+<style id='jetpack-global-styles-frontend-style-inline-css'>
+:root { --font-headings: unset; --font-base: unset; --font-headings-default: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif; --font-base-default: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;}
+</style>
+<link rel='stylesheet' id='all-css-6-1' href='https://s0.wp.com/_static/??-eJxti8sKgCAQAH8oW6KHdoi+xcTUWF1pjX4/OnSIOg0DM3BmYSgVmwrEQ2Q8XEgMmbiIFXXYgb3eQ3IPa8Ncwf/FZIJGgeToLZ+peBstg+/AIS0a72COU9OPUg69atV2AWWKN+I=?cssminify=yes' type='text/css' media='all' />
+<script id='wpcom-actionbar-placeholder-js-extra'>
+var actionbardata = {"siteID":"188343997","siteName":"diyplugger.com","siteURL":"https:\/\/diyplugger.com","icon":"<img alt='' src='https:\/\/s2.wp.com\/i\/logo\/wpcom-gray-white.png' class='avatar avatar-50' height='50' width='50' \/>","canManageOptions":"","canCustomizeSite":"","isFollowing":"","themeSlug":"pub\/blank-canvas","signupURL":"https:\/\/wordpress.com\/start\/","loginURL":"https:\/\/wordpress.com\/log-in?redirect_to=https%3A%2F%2Fdiyplugger.com%2F&signup_flow=account&domain=diyplugger.com","themeURL":"https:\/\/wordpress.com\/theme\/blank-canvas\/","xhrURL":"https:\/\/diyplugger.com\/wp-admin\/admin-ajax.php","nonce":"68ca4ff9b9","isSingular":"1","isFolded":"","isLoggedIn":"","isMobile":"","subscribeNonce":"<input type=\"hidden\" id=\"_wpnonce\" name=\"_wpnonce\" value=\"720a853973\" \/>","referer":"https:\/\/diyplugger.com\/","canFollow":"","feedID":"112957684","statusMessage":"","customizeLink":"https:\/\/diyplugger.wordpress.com\/wp-admin\/customize.php?url=https%3A%2F%2Fdiyplugger.wordpress.com%2F","postID":"5","shortlink":"https:\/\/wp.me\/PcKgSp-5","canEditPost":"","editLink":"https:\/\/wordpress.com\/page\/diyplugger.com\/5","statsLink":"https:\/\/wordpress.com\/stats\/post\/5\/diyplugger.com","i18n":{"view":"View site","follow":"Follow","following":"Following","edit":"Edit","login":"Log in","signup":"Sign up","customize":"Customize","report":"Report this content","themeInfo":"Get theme: Blank Canvas","shortlink":"Copy shortlink","copied":"Copied","followedText":"New posts from this site will now appear in your <a href=\"https:\/\/wordpress.com\/read\">Reader<\/a>","foldBar":"Collapse this bar","unfoldBar":"Expand this bar","editSubs":"Manage subscriptions","viewReader":"View site in Reader","viewReadPost":"View post in Reader","subscribe":"Sign me up","enterEmail":"Enter your email address","followers":"","alreadyUser":"Already have a WordPress.com account? <a href=\"https:\/\/wordpress.com\/log-in?redirect_to=https%3A%2F%2Fdiyplugger.com%2F&signup_flow=account&domain=diyplugger.com\">Log in now.<\/a>","stats":"Stats"}};
+</script>
+<script type='text/javascript' src='https://s1.wp.com/_static/??-eJyFyjEOgzAMQNELNYlIJRAD4ixpcCNH2KGxo6q3p5XowMT0h//cezOxsAKry+K2IkogEhLYLDd3vlQeuIJpAvULWA3ys/wdclzbAvKD+dWgfo5YQr5EhjDVoHDgmaau7/x98GPv8w4hiDx2'></script>
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="https://diyplugger.wordpress.com/xmlrpc.php?rsd" />
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="https://s1.wp.com/wp-includes/wlwmanifest.xml" /> 
+<meta name="generator" content="WordPress.com" />
+<link rel="canonical" href="index.html" />
+<link rel='shortlink' href='https://wp.me/PcKgSp-5' />
+<link rel="alternate" type="application/json+oembed" href="https://public-api.wordpress.com/oembed/?format=json&amp;url=https%3A%2F%2Fdiyplugger.com%2F&amp;for=wpcom-auto-discovery" /><link rel="alternate" type="application/xml+oembed" href="https://public-api.wordpress.com/oembed/?format=xml&amp;url=https%3A%2F%2Fdiyplugger.com%2F&amp;for=wpcom-auto-discovery" />
+<!-- Jetpack Open Graph Tags -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="(no title)" />
+<meta property="og:url" content="https://diyplugger.com/" />
+<meta property="og:image" content="https://diyplugger.files.wordpress.com/2021/01/adirondack-chair621.jpg" />
+<meta property="og:image:width" content="320" />
+<meta property="og:image:height" content="250" />
+<meta property="og:locale" content="en_US" />
+<meta name="twitter:site" content="@wordpressdotcom" />
+<meta name="twitter:image" content="https://diyplugger.files.wordpress.com/2021/01/adirondack-chair621.jpg?w=640" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:description" content="Visit the post for more." />
+<meta property="article:publisher" content="https://www.facebook.com/WordPresscom" />
+
+<!-- End Jetpack Open Graph Tags -->
+<link rel="shortcut icon" type="image/x-icon" href="https://s1.wp.com/i/favicon.ico" sizes="16x16 24x24 32x32 48x48" />
+<link rel="icon" type="image/x-icon" href="https://s1.wp.com/i/favicon.ico" sizes="16x16 24x24 32x32 48x48" />
+<link rel="apple-touch-icon" href="../s2.wp.com/i/webclip.png" />
+<link rel="search" type="application/opensearchdescription+xml" href="osd.xml" title="" />
+<link rel="search" type="application/opensearchdescription+xml" href="https://s1.wp.com/opensearch.xml" title="WordPress.com" />
+<meta name="application-name" content="WordPress.com" /><meta name="msapplication-window" content="width=device-width;height=device-height" /><meta name="msapplication-task" content="name=Subscribe;action-uri=https://diyplugger.com/feed/;icon-uri=https://s1.wp.com/i/favicon.ico" /><meta name="msapplication-task" content="name=Sign up for a free blog;action-uri=http://wordpress.com/signup/;icon-uri=https://s1.wp.com/i/favicon.ico" /><meta name="msapplication-task" content="name=WordPress.com Support;action-uri=http://support.wordpress.com/;icon-uri=https://s1.wp.com/i/favicon.ico" /><meta name="msapplication-task" content="name=WordPress.com Forums;action-uri=http://forums.wordpress.com/;icon-uri=https://s1.wp.com/i/favicon.ico" /><meta name="description" content="This amazing collection of 16,000 woodworking plans could save you time and money, plus, it includes step by step instructions on how to put any type of woodworking project you can think of together!!! Click here to watch free presentation!!! Here&#039;s Everything You Could Get In TedsWoodworking: 16,000 &quot;Done For You&quot; Plans Download over 16,000&hellip;" />
+<style type="text/css" id="custom-colors-css">
+	:root,
+	#editor .editor-styles-wrapper {
+		--global--color-background: #fcecd3;
+		--global--color-foreground: #444444;
+		--global--color-foreground-low-contrast: hsl( NAN,0%,36.666666666667%);
+		--global--color-foreground-high-contrast: hsl( NAN,0%,16.666666666667%);
+		--global--color-primary: #000000;
+		--global--color-primary-hover: hsl( 0,0%,10%);
+		--global--color-secondary: #007cba;
+		--global--color-secondary-hover: hsl( 200,100%,82.941176470588%);
+		--global--color-tertiary: #fafafa;
+	}
+
+	.global--color-background { background-color: #fcecd3;}
+.global--color-foreground { color: #444444;}
+.global--color-primary { color: #000000;}
+.global--color-secondary { color: #007cba;}
+.global--color-tertiary { color: #fafafa;}
+</style>
+		<!-- Jetpack Google Analytics -->
+		<script async src='https://www.googletagmanager.com/gtag/js?id=G-S6HQCJTG2X'></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push( arguments ); }
+			gtag( 'js', new Date() );
+			gtag( 'config', "G-S6HQCJTG2X" );
+					</script>
+		<!-- End Jetpack Google Analytics -->
+		</head>
+
+<body class="home page-template-default page page-id-5 wp-embed-responsive customizer-styles-applied hide-post-and-page-titles hide-site-footer hide-comments singular highlander-enabled highlander-light custom-colors">
+<div id="page" class="site">
+	<a class="skip-link screen-reader-text" href="#content">Skip to content</a>
+
+	
+
+	<div id="content" class="site-content">
+
+	<section id="primary" class="content-area">
+		<main id="main" class="site-main" role="main">
+
+			
+<article id="post-5" class="post-5 page type-page status-publish hentry entry">
+	
+	
+	<div class="entry-content">
+		
+<div class="wp-block-group alignfull has-foreground-dark-background-color has-background"><div class="wp-block-group__inner-container">
+<div class="wp-block-coblocks-gallery-offset alignfull"><ul class="coblocks-gallery has-caption-style-dark has-small-images has-medium-gutter"><li class="coblocks-gallery--item"><figure class="wp-block-coblocks-gallery-offset__figure"><img data-attachment-id="80" data-permalink="https://diyplugger.com/s-group22/" data-orig-file="https://diyplugger.files.wordpress.com/2021/01/s-group22.png" data-orig-size="605,307" data-comments-opened="1" data-image-meta="{&quot;aperture&quot;:&quot;0&quot;,&quot;credit&quot;:&quot;&quot;,&quot;camera&quot;:&quot;&quot;,&quot;caption&quot;:&quot;&quot;,&quot;created_timestamp&quot;:&quot;0&quot;,&quot;copyright&quot;:&quot;&quot;,&quot;focal_length&quot;:&quot;0&quot;,&quot;iso&quot;:&quot;0&quot;,&quot;shutter_speed&quot;:&quot;0&quot;,&quot;title&quot;:&quot;&quot;,&quot;orientation&quot;:&quot;0&quot;}" data-image-title="s-group22" data-image-description="" data-medium-file="https://diyplugger.files.wordpress.com/2021/01/s-group22.png?w=300" data-large-file="https://diyplugger.files.wordpress.com/2021/01/s-group22.png?w=605" src="../diyplugger.files.wordpress.com/2021/01/s-group225427.png?w=605" alt="" data-id="80" data-imglink="" data-link="https://diyplugger.com/s-group22/" class="wp-image-80" srcset="https://diyplugger.files.wordpress.com/2021/01/s-group22.png 605w, https://diyplugger.files.wordpress.com/2021/01/s-group22.png?w=150 150w, https://diyplugger.files.wordpress.com/2021/01/s-group22.png?w=300 300w" sizes="(max-width: 605px) 100vw, 605px" /></figure></li><li class="coblocks-gallery--item"><figure class="wp-block-coblocks-gallery-offset__figure"><img data-attachment-id="77" data-permalink="https://diyplugger.com/ted-top-logo711-1/" data-orig-file="https://diyplugger.files.wordpress.com/2021/01/ted-top-logo711-1.png" data-orig-size="240,59" data-comments-opened="1" data-image-meta="{&quot;aperture&quot;:&quot;0&quot;,&quot;credit&quot;:&quot;&quot;,&quot;camera&quot;:&quot;&quot;,&quot;caption&quot;:&quot;&quot;,&quot;created_timestamp&quot;:&quot;0&quot;,&quot;copyright&quot;:&quot;&quot;,&quot;focal_length&quot;:&quot;0&quot;,&quot;iso&quot;:&quot;0&quot;,&quot;shutter_speed&quot;:&quot;0&quot;,&quot;title&quot;:&quot;&quot;,&quot;orientation&quot;:&quot;0&quot;}" data-image-title="ted-top-logo711-1" data-image-description="" data-medium-file="https://diyplugger.files.wordpress.com/2021/01/ted-top-logo711-1.png?w=240" data-large-file="https://diyplugger.files.wordpress.com/2021/01/ted-top-logo711-1.png?w=240" src="../diyplugger.files.wordpress.com/2021/01/ted-top-logo711-1d209.png?w=240" alt="" data-id="77" data-imglink="" data-link="https://diyplugger.com/ted-top-logo711-1/" class="wp-image-77" srcset="https://diyplugger.files.wordpress.com/2021/01/ted-top-logo711-1.png 240w, https://diyplugger.files.wordpress.com/2021/01/ted-top-logo711-1.png?w=150 150w" sizes="(max-width: 240px) 100vw, 240px" /></figure></li><li class="coblocks-gallery--item"><figure class="wp-block-coblocks-gallery-offset__figure"><img data-attachment-id="81" data-permalink="https://diyplugger.com/ted-main-image7-1/" data-orig-file="https://diyplugger.files.wordpress.com/2021/01/ted-main-image7-1.jpg" data-orig-size="990,409" data-comments-opened="1" data-image-meta="{&quot;aperture&quot;:&quot;0&quot;,&quot;credit&quot;:&quot;&quot;,&quot;camera&quot;:&quot;&quot;,&quot;caption&quot;:&quot;&quot;,&quot;created_timestamp&quot;:&quot;0&quot;,&quot;copyright&quot;:&quot;&quot;,&quot;focal_length&quot;:&quot;0&quot;,&quot;iso&quot;:&quot;0&quot;,&quot;shutter_speed&quot;:&quot;0&quot;,&quot;title&quot;:&quot;&quot;,&quot;orientation&quot;:&quot;0&quot;}" data-image-title="ted-main-image7-1" data-image-description="" data-medium-file="https://diyplugger.files.wordpress.com/2021/01/ted-main-image7-1.jpg?w=300" data-large-file="https://diyplugger.files.wordpress.com/2021/01/ted-main-image7-1.jpg?w=620" src="../diyplugger.files.wordpress.com/2021/01/ted-main-image7-17b3f.jpg?w=990" alt="" data-id="81" data-imglink="" data-link="https://diyplugger.com/ted-main-image7-1/" class="wp-image-81" srcset="https://diyplugger.files.wordpress.com/2021/01/ted-main-image7-1.jpg 990w, https://diyplugger.files.wordpress.com/2021/01/ted-main-image7-1.jpg?w=150 150w, https://diyplugger.files.wordpress.com/2021/01/ted-main-image7-1.jpg?w=300 300w, https://diyplugger.files.wordpress.com/2021/01/ted-main-image7-1.jpg?w=768 768w" sizes="(max-width: 990px) 100vw, 990px" /></figure></li></ul></div>
+
+
+
+<h1 class="alignfull has-text-align-center has-primary-color has-text-color has-link-color" style="font-size:39px;">This amazing collection of <span style="color:#fb0728;" class="has-inline-color">16,000</span><em> <u><strong><span style="color:#d41b2a;" class="has-inline-color"><a href="https://zshorten.com/ADDMl">woodworking plans</a></span></strong></u></em> could save you time and money, <span style="color:#f90411;" class="has-inline-color"><strong>plus</strong></span>, it includes <span style="color:#f90410;" class="has-inline-color"><strong>step by step</strong></span> <span style="text-decoration:underline;"><strong>instructions</strong></span> on how to put any type of woodworking project you can think of together!!!</h1>
+
+
+
+<div class="wp-block-buttons">
+<div class="wp-block-button has-custom-width wp-block-button__width-100 is-style-fill"><a class="wp-block-button__link has-background" href="https://zshorten.com/ADDMl" style="border-radius:50px;background-color:#972532;"><strong><span style="color:#fce303;" class="has-inline-color"><span class="uppercase">Click here to watch free presentation!</span>!!</span></strong></a></div>
+</div>
+
+
+
+<h2 class="alignfull has-text-align-center"><strong>Here&#8217;s Everything You Could Get In TedsWoodworking:</strong></h2>
+
+
+
+<div class="wp-block-columns alignfull">
+<div class="wp-block-column">
+<p><strong><span style="color:#007cba;" class="has-inline-color">16,000 &#8220;Done For You&#8221; Plans</span></strong></p>
+
+
+
+<p class="has-link-color">Download over 16,000 “done for you” plans with <span style="color:#fd0421;" class="has-inline-color">step-by-step</span> <span class="has-inline-color has-black-color"><strong><span style="text-decoration:underline;"><a href="https://zshorten.com/ADDMl">blueprints</a></span></strong></span> and easy to follow instructions that makes the most challenging project a walk in the park!</p>
+
+
+
+<p>From large outhouses to intricate crafts and furniture around the house, I’ve got&nbsp;<strong>EVERYTHING&nbsp;</strong>covered. You would be able to build any project you could ever imagine!</p>
+</div>
+
+
+
+<div class="wp-block-column">
+<p><strong><span style="color:#007cba;" class="has-inline-color">Lifetime Free Monthly Plans</span></strong></p>
+
+
+
+<p>Get <strong>monthly free plans for<span class="has-inline-color has-black-color"> life</span>. </strong>We draft new plans monthly and you&#8217;ll get to download them for <span style="color:#f80409;" class="has-inline-color">free</span>.<br><br>You will get lifetime access to a membership area where you can download these new plans monthly.<br><br>There are <span style="color:#f90408;" class="has-inline-color">NO</span> recurring fees, no expiry date.</p>
+</div>
+
+
+
+<div class="wp-block-column">
+<p><strong><span style="color:#007cba;" class="has-inline-color">Custom Plans + Support</span></strong></p>
+
+
+
+<p>Request a custom plan drafted for you. If you have a specific project in mind, our team of craftsman will be able draft up a custom plan for you.</p>
+
+
+
+<p>Plus, you get<strong>&nbsp;all the help you need to complete your project&nbsp;</strong>from our master woodworkers via email and forum support.</p>
+
+
+
+<p>​</p>
+</div>
+</div>
+
+
+
+<div class="wp-block-columns alignfull">
+<div class="wp-block-column">
+<p><strong><span style="color:#007cba;" class="has-inline-color">Access From Any Device</span></strong></p>
+
+
+
+<p>Access your plans from <span class="has-inline-color has-black-color"><strong>any device, anytime, anywhere</strong> &#8211; </span>which makes it super convenient for you</p>
+
+
+
+<p>View all your plans on any mobile / tablet device so you can view it while working at your shop</p>
+</div>
+
+
+
+<div class="wp-block-column">
+<p><strong><span style="color:#007cba;" class="has-inline-color">Instant Access + DVDs</span></strong></p>
+
+
+
+<p>Get immediate <strong>lifetime access </strong>to all your plans in the members area.<br><br>You can also opt for the DVDs of all current plans, training, bonuses and we’ll ship it to your mailbox.</p>
+</div>
+
+
+
+<div class="wp-block-column">
+<p><strong><span style="color:#007cba;" class="has-inline-color">Guides &amp; Tutorial Videos</span></strong></p>
+
+
+
+<p class="has-link-color"><span style="color:#fa0418;" class="has-inline-color"><a href="https://zshorten.com/ADDMl"><strong>Download</strong></a></span> tons of included guides on techniques &amp; invaluable resources to expand your skills.<br><br>Get access to an archive of tutorial videos covering fundamentals and advanced woodworking techniques.</p>
+</div>
+</div>
+
+
+
+<h1 class="alignfull has-text-align-center"><strong>Make any project &#8220;easy&#8221; and hassle &#8220;free&#8221;</strong> </h1>
+
+
+
+<h1 class="alignfull has-text-align-center"><strong>Suitable for both Beginners &amp; Pros!!!</strong></h1>
+
+
+
+<div class="wp-block-buttons">
+<div class="wp-block-button has-custom-width wp-block-button__width-100"><a class="wp-block-button__link has-background" href="https://zshorten.com/ADDMl" style="border-radius:50px;background-color:#a3000d;"><strong><span style="color:#FFFFFF;" class="has-inline-color">Click here to</span><span style="color:#9aa300;" class="has-inline-color"> </span><span style="color:#eefa04;" class="has-inline-color"><span style="text-decoration:underline;">DOWNLOAD</span></span> <span style="color:#FFFFFF;" class="has-inline-color">your plans</span> <span style="color:#f1f907;" class="has-inline-color"><span style="text-decoration:underline;">TODAY</span></span><span style="color:#FFFFFF;" class="has-inline-color"> and </span><span style="color:#f1f907;" class="has-inline-color">so much more!!!</span></strong></a></div>
+</div>
+
+
+
+<div class="wp-block-columns">
+<div class="wp-block-column" style="flex-basis:100%;">
+<div class="wp-block-coblocks-gallery-offset alignwide"><ul class="coblocks-gallery has-filter-saturation has-caption-style-dark has-small-images has-medium-gutter"><li class="coblocks-gallery--item"><figure class="wp-block-coblocks-gallery-offset__figure"><img data-attachment-id="65" data-permalink="https://diyplugger.com/amazing-woodworking-projects1-1-2/" data-orig-file="https://diyplugger.files.wordpress.com/2021/01/amazing-woodworking-projects1-1-2.png" data-orig-size="800,720" data-comments-opened="1" data-image-meta="{&quot;aperture&quot;:&quot;0&quot;,&quot;credit&quot;:&quot;&quot;,&quot;camera&quot;:&quot;&quot;,&quot;caption&quot;:&quot;&quot;,&quot;created_timestamp&quot;:&quot;0&quot;,&quot;copyright&quot;:&quot;&quot;,&quot;focal_length&quot;:&quot;0&quot;,&quot;iso&quot;:&quot;0&quot;,&quot;shutter_speed&quot;:&quot;0&quot;,&quot;title&quot;:&quot;&quot;,&quot;orientation&quot;:&quot;0&quot;}" data-image-title="amazing-woodworking-projects1-1-2" data-image-description="" data-medium-file="https://diyplugger.files.wordpress.com/2021/01/amazing-woodworking-projects1-1-2.png?w=300" data-large-file="https://diyplugger.files.wordpress.com/2021/01/amazing-woodworking-projects1-1-2.png?w=620" src="../diyplugger.files.wordpress.com/2021/01/amazing-woodworking-projects1-1-275cc.png?w=800" alt="" data-id="65" data-imglink="" class="wp-image-65" srcset="https://diyplugger.files.wordpress.com/2021/01/amazing-woodworking-projects1-1-2.png 800w, https://diyplugger.files.wordpress.com/2021/01/amazing-woodworking-projects1-1-2.png?w=150 150w, https://diyplugger.files.wordpress.com/2021/01/amazing-woodworking-projects1-1-2.png?w=300 300w, https://diyplugger.files.wordpress.com/2021/01/amazing-woodworking-projects1-1-2.png?w=768 768w" sizes="(max-width: 800px) 100vw, 800px" /></figure></li><li class="coblocks-gallery--item"><figure class="wp-block-coblocks-gallery-offset__figure"><img data-attachment-id="64" data-permalink="https://diyplugger.com/wood-projects-cool3-1-1/" data-orig-file="https://diyplugger.files.wordpress.com/2021/01/wood-projects-cool3-1-1.png" data-orig-size="800,483" data-comments-opened="1" data-image-meta="{&quot;aperture&quot;:&quot;0&quot;,&quot;credit&quot;:&quot;&quot;,&quot;camera&quot;:&quot;&quot;,&quot;caption&quot;:&quot;&quot;,&quot;created_timestamp&quot;:&quot;0&quot;,&quot;copyright&quot;:&quot;&quot;,&quot;focal_length&quot;:&quot;0&quot;,&quot;iso&quot;:&quot;0&quot;,&quot;shutter_speed&quot;:&quot;0&quot;,&quot;title&quot;:&quot;&quot;,&quot;orientation&quot;:&quot;0&quot;}" data-image-title="wood-projects-cool3-1-1" data-image-description="" data-medium-file="https://diyplugger.files.wordpress.com/2021/01/wood-projects-cool3-1-1.png?w=300" data-large-file="https://diyplugger.files.wordpress.com/2021/01/wood-projects-cool3-1-1.png?w=620" src="../diyplugger.files.wordpress.com/2021/01/wood-projects-cool3-1-175cc.png?w=800" alt="" data-id="64" data-imglink="" class="wp-image-64" srcset="https://diyplugger.files.wordpress.com/2021/01/wood-projects-cool3-1-1.png 800w, https://diyplugger.files.wordpress.com/2021/01/wood-projects-cool3-1-1.png?w=150 150w, https://diyplugger.files.wordpress.com/2021/01/wood-projects-cool3-1-1.png?w=300 300w, https://diyplugger.files.wordpress.com/2021/01/wood-projects-cool3-1-1.png?w=768 768w" sizes="(max-width: 800px) 100vw, 800px" /></figure></li><li class="coblocks-gallery--item"><figure class="wp-block-coblocks-gallery-offset__figure"><img data-attachment-id="84" data-permalink="https://diyplugger.com/home/wood-plans-top/" data-orig-file="https://diyplugger.files.wordpress.com/2021/01/wood-plans-top.jpg" data-orig-size="960,290" data-comments-opened="1" data-image-meta="{&quot;aperture&quot;:&quot;0&quot;,&quot;credit&quot;:&quot;&quot;,&quot;camera&quot;:&quot;&quot;,&quot;caption&quot;:&quot;&quot;,&quot;created_timestamp&quot;:&quot;0&quot;,&quot;copyright&quot;:&quot;&quot;,&quot;focal_length&quot;:&quot;0&quot;,&quot;iso&quot;:&quot;0&quot;,&quot;shutter_speed&quot;:&quot;0&quot;,&quot;title&quot;:&quot;&quot;,&quot;orientation&quot;:&quot;0&quot;}" data-image-title="wood-plans-top" data-image-description="" data-medium-file="https://diyplugger.files.wordpress.com/2021/01/wood-plans-top.jpg?w=300" data-large-file="https://diyplugger.files.wordpress.com/2021/01/wood-plans-top.jpg?w=620" src="../diyplugger.files.wordpress.com/2021/01/wood-plans-top2289.jpg?w=960" alt="" data-id="84" data-imglink="" class="wp-image-84" srcset="https://diyplugger.files.wordpress.com/2021/01/wood-plans-top.jpg 960w, https://diyplugger.files.wordpress.com/2021/01/wood-plans-top.jpg?w=150 150w, https://diyplugger.files.wordpress.com/2021/01/wood-plans-top.jpg?w=300 300w, https://diyplugger.files.wordpress.com/2021/01/wood-plans-top.jpg?w=768 768w" sizes="(max-width: 960px) 100vw, 960px" /></figure></li><li class="coblocks-gallery--item"><figure class="wp-block-coblocks-gallery-offset__figure"><img data-attachment-id="114" data-permalink="https://diyplugger.com/home/cprojects2-1/" data-orig-file="https://diyplugger.files.wordpress.com/2021/01/cprojects2-1.jpg" data-orig-size="810,194" data-comments-opened="1" data-image-meta="{&quot;aperture&quot;:&quot;0&quot;,&quot;credit&quot;:&quot;&quot;,&quot;camera&quot;:&quot;&quot;,&quot;caption&quot;:&quot;&quot;,&quot;created_timestamp&quot;:&quot;0&quot;,&quot;copyright&quot;:&quot;&quot;,&quot;focal_length&quot;:&quot;0&quot;,&quot;iso&quot;:&quot;0&quot;,&quot;shutter_speed&quot;:&quot;0&quot;,&quot;title&quot;:&quot;&quot;,&quot;orientation&quot;:&quot;0&quot;}" data-image-title="cprojects2 (1)" data-image-description="" data-medium-file="https://diyplugger.files.wordpress.com/2021/01/cprojects2-1.jpg?w=300" data-large-file="https://diyplugger.files.wordpress.com/2021/01/cprojects2-1.jpg?w=620" src="../diyplugger.files.wordpress.com/2021/01/cprojects2-1a04d.jpg?w=810" alt="" data-id="114" data-imglink="" class="wp-image-114" srcset="https://diyplugger.files.wordpress.com/2021/01/cprojects2-1.jpg 810w, https://diyplugger.files.wordpress.com/2021/01/cprojects2-1.jpg?w=150 150w, https://diyplugger.files.wordpress.com/2021/01/cprojects2-1.jpg?w=300 300w, https://diyplugger.files.wordpress.com/2021/01/cprojects2-1.jpg?w=768 768w" sizes="(max-width: 810px) 100vw, 810px" /></figure></li><li class="coblocks-gallery--item"><figure class="wp-block-coblocks-gallery-offset__figure"><img data-attachment-id="117" data-permalink="https://diyplugger.com/home/cprojects11/" data-orig-file="https://diyplugger.files.wordpress.com/2021/01/cprojects11.jpg" data-orig-size="810,194" data-comments-opened="1" data-image-meta="{&quot;aperture&quot;:&quot;0&quot;,&quot;credit&quot;:&quot;&quot;,&quot;camera&quot;:&quot;&quot;,&quot;caption&quot;:&quot;&quot;,&quot;created_timestamp&quot;:&quot;0&quot;,&quot;copyright&quot;:&quot;&quot;,&quot;focal_length&quot;:&quot;0&quot;,&quot;iso&quot;:&quot;0&quot;,&quot;shutter_speed&quot;:&quot;0&quot;,&quot;title&quot;:&quot;&quot;,&quot;orientation&quot;:&quot;0&quot;}" data-image-title="cprojects11" data-image-description="" data-medium-file="https://diyplugger.files.wordpress.com/2021/01/cprojects11.jpg?w=300" data-large-file="https://diyplugger.files.wordpress.com/2021/01/cprojects11.jpg?w=620" src="../diyplugger.files.wordpress.com/2021/01/cprojects11a04d.jpg?w=810" alt="" data-id="117" data-imglink="" class="wp-image-117" srcset="https://diyplugger.files.wordpress.com/2021/01/cprojects11.jpg 810w, https://diyplugger.files.wordpress.com/2021/01/cprojects11.jpg?w=150 150w, https://diyplugger.files.wordpress.com/2021/01/cprojects11.jpg?w=300 300w, https://diyplugger.files.wordpress.com/2021/01/cprojects11.jpg?w=768 768w" sizes="(max-width: 810px) 100vw, 810px" /></figure></li><li class="coblocks-gallery--item"><figure class="wp-block-coblocks-gallery-offset__figure"><img data-attachment-id="118" data-permalink="https://diyplugger.com/home/adirondack-chair621/" data-orig-file="https://diyplugger.files.wordpress.com/2021/01/adirondack-chair621.jpg" data-orig-size="320,250" data-comments-opened="1" data-image-meta="{&quot;aperture&quot;:&quot;0&quot;,&quot;credit&quot;:&quot;&quot;,&quot;camera&quot;:&quot;&quot;,&quot;caption&quot;:&quot;&quot;,&quot;created_timestamp&quot;:&quot;0&quot;,&quot;copyright&quot;:&quot;&quot;,&quot;focal_length&quot;:&quot;0&quot;,&quot;iso&quot;:&quot;0&quot;,&quot;shutter_speed&quot;:&quot;0&quot;,&quot;title&quot;:&quot;&quot;,&quot;orientation&quot;:&quot;0&quot;}" data-image-title="adirondack-chair621" data-image-description="" data-medium-file="https://diyplugger.files.wordpress.com/2021/01/adirondack-chair621.jpg?w=300" data-large-file="https://diyplugger.files.wordpress.com/2021/01/adirondack-chair621.jpg?w=320" src="../diyplugger.files.wordpress.com/2021/01/adirondack-chair62187f8.jpg?w=320" alt="" data-id="118" data-imglink="" class="wp-image-118" srcset="https://diyplugger.files.wordpress.com/2021/01/adirondack-chair621.jpg 320w, https://diyplugger.files.wordpress.com/2021/01/adirondack-chair621.jpg?w=150 150w, https://diyplugger.files.wordpress.com/2021/01/adirondack-chair621.jpg?w=300 300w" sizes="(max-width: 320px) 100vw, 320px" /></figure></li></ul></div>
+</div>
+</div>
+
+
+
+<div class="wp-block-group alignfull has-foreground-color has-secondary-background-color has-text-color has-background"><div class="wp-block-group__inner-container">
+<p class="has-text-align-center"><span style="color:#f5f604;" class="has-inline-color">© 2021 DIY Plugger</span> | <span style="color:#f0f104;" class="has-inline-color">All Rights Reserved</span> | <span style="color:#f4f004;" class="has-inline-color"><a rel="noreferrer noopener" href="https://www.privacypolicytemplate.net/live.php?token=B2ldcnscgdSgRDINN4GiKSldbROOCKfg" target="_blank">Privacy Policy</a></span> | <a rel="noreferrer noopener" href="https://www.termsservicetemplate.com/live.php?token=QC8AmSoSFCNRoIMm8tKnAK2gqpimoXAS" target="_blank"><span style="color:#fcf805;" class="has-inline-color">Terms Of Service</span> </a>| <span style="color:#eaf201;" class="has-inline-color"><a href="indexed66.html?page_id=135">Contact Us</a></span></p>
+
+
+
+<p class="has-text-align-center">Note: This site is not endorsed by TedsWoodworking</p>
+</div></div>
+</div></div>
+	</div><!-- .entry-content -->
+
+</article><!-- #post-${ID} -->
+
+		</main><!-- #main -->
+	</section><!-- #primary -->
+
+
+	</div><!-- #content -->
+
+	<footer id="colophon" class="site-footer default-max-width" role="contentinfo" aria-label="Footer">
+		
+<div class="site-info">
+			<a href="https://wordpress.com/?ref=footer_custom_powered" rel="nofollow">Website Powered by WordPress.com</a>.
+	</div><!-- .site-info -->
+	</footer><!-- #colophon -->
+
+</div><!-- #page -->
+
+<!--  -->
+<script src='../0.gravatar.com/js/gprofiles1961.js?ver=202108y' id='grofiles-cards-js'></script>
+<script id='wpgroho-js-extra'>
+var WPGroHo = {"my_hash":""};
+</script>
+<script type='text/javascript' src='../s1.wp.com/wp-content/mu-plugins/gravatar-hovercards/wpgrohodc5c.js?m=1610363240h'></script>
+
+	<script>
+		// Initialize and attach hovercards to all gravatars
+		( function() {
+			function init() {
+				if ( typeof Gravatar === 'undefined' ) {
+					return;
+				}
+
+				if ( typeof Gravatar.init !== 'function' ) {
+					return;
+				}
+
+				Gravatar.profile_cb = function ( hash, id ) {
+					WPGroHo.syncProfileData( hash, id );
+				};
+
+				Gravatar.my_hash = WPGroHo.my_hash;
+				Gravatar.init( 'body', '#wp-admin-bar-my-account' );
+			}
+
+			if ( document.readyState !== 'loading' ) {
+				init();
+			} else {
+				document.addEventListener( 'DOMContentLoaded', init );
+			}
+		} )();
+	</script>
+
+		<div style="display:none">
+	</div>
+
+<script>
+window.addEventListener( "load", function( event ) {
+	var link = document.createElement( "link" );
+	link.href = "../s0.wp.com/wp-content/mu-plugins/actionbar/actionbar61ea.css?v=20201002";
+	link.type = "text/css";
+	link.rel = "stylesheet";
+	document.head.appendChild( link );
+
+	var script = document.createElement( "script" );
+	script.src = "../s0.wp.com/wp-content/mu-plugins/actionbar/actionbar61ea.js?v=20201002";
+	script.defer = true;
+	document.body.appendChild( script );
+} );
+</script>
+
+	
+	<div id="carousel-reblog-box">
+		<form action="#" name="carousel-reblog">
+			<label for="carousel-reblog-content" id="carousel-reblog-lblogcontent" class="screen-reader-text">Add your thoughts here... (optional)</label>
+			<textarea id="carousel-reblog-content" name="carousel-reblog-content" placeholder="Add your thoughts here... (optional)"></textarea>
+			<label for="carousel-reblog-to-blog-id" id="carousel-reblog-lblogid">Post to</label>
+			<select name="carousel-reblog-to-blog-id" id="carousel-reblog-to-blog-id">
+						</select>
+
+			<div class="submit">
+				<span class="canceltext"><a href="#" class="cancel">Cancel</a></span>
+				<input type="submit" name="carousel-reblog-submit" class="button" id="carousel-reblog-submit" value="Reblog Post" />
+				<input type="hidden" id="carousel-reblog-blog-id" value="188343997" />
+				<input type="hidden" id="carousel-reblog-blog-url" value="https://diyplugger.com" />
+				<input type="hidden" id="carousel-reblog-blog-title" value="" />
+				<input type="hidden" id="carousel-reblog-post-url" value="" />
+				<input type="hidden" id="carousel-reblog-post-title" value="" />
+			</div>
+
+			<input type="hidden" id="_wpnonce" name="_wpnonce" value="d7964dc0bb" /><input type="hidden" name="_wp_http_referer" value="/" />		</form>
+
+		<div class="arrow"></div>
+	</div>
+
+		<div
+			class="jp-carousel-wrap jp-carousel-transitions"
+			itemscope
+			itemtype="https://schema.org/ImageGallery"
+			style="display: none;">
+			<div class="jp-carousel-overlay"></div>
+			<div class="jp-carousel"></div>
+			<div class="jp-carousel-fadeaway"></div>
+			<div class="jp-carousel-info">
+				<div class="jp-carousel-photo-info">
+					<h2 class="jp-carousel-caption" itemprop="caption description"></h2>
+				</div>
+				<div class="jp-carousel-info-columns">
+					<div class="jp-carousel-left-column-wrapper">
+						<div class="jp-carousel-titleanddesc"></div>
+						<!-- Intentional duplicate -->
+						<div class="jp-carousel-photo-info">
+							<h2 class="jp-carousel-caption" itemprop="caption description"></h2>
+						</div>
+													<div id="jp-carousel-comment-form-container">
+																											<form id="jp-carousel-comment-form">
+											<textarea
+												name="comment"
+												class="jp-carousel-comment-form-field jp-carousel-comment-form-textarea"
+												id="jp-carousel-comment-form-comment-field"
+												placeholder="Write a Comment..."
+											></textarea>
+											<div id="jp-carousel-comment-form-submit-and-info-wrapper">
+												<div id="jp-carousel-comment-form-commenting-as">
+																											<fieldset>
+															<label for="email">Email (Required)</label>
+															<input type="text" name="email" class="jp-carousel-comment-form-field jp-carousel-comment-form-text-field" id="jp-carousel-comment-form-email-field" />
+														</fieldset>
+														<fieldset>
+															<label for="author">Name (Required)</label>
+															<input type="text" name="author" class="jp-carousel-comment-form-field jp-carousel-comment-form-text-field" id="jp-carousel-comment-form-author-field" />
+														</fieldset>
+														<fieldset>
+															<label for="url">Website</label>
+															<input type="text" name="url" class="jp-carousel-comment-form-field jp-carousel-comment-form-text-field" id="jp-carousel-comment-form-url-field" />
+														</fieldset>
+																									</div>
+												<input
+													type="submit"
+													name="submit"
+													class="jp-carousel-comment-form-button"
+													id="jp-carousel-comment-form-button-submit"
+													value="Post Comment" />
+												<span id="jp-carousel-comment-form-spinner">&nbsp;</span>
+												<div id="jp-carousel-comment-post-results"></div>
+											</div>
+										</form>
+																								</div>
+							<div class="jp-carousel-comments"></div>
+							<div id="jp-carousel-comments-loading">
+								<span>Loading Comments...</span>
+							</div>
+											</div>
+					<div class="jp-carousel-image-meta">
+						<div class="jp-carousel-buttons">
+														<a class="jp-carousel-commentlink" href="#">Comment</a>
+																				</div>
+						<ul class="jp-carousel-image-exif" style="display: none;"></ul>
+						<a class="jp-carousel-image-download" style="display: none;"></a>
+						<div class="jp-carousel-image-map" style="display: none;"></div>
+					</div>
+				</div>
+			</div>
+			<div class="jp-carousel-next-button" style="display: none;">
+				<span></span>
+			</div>
+			<div class="jp-carousel-previous-button" style="display: none;">
+				<span></span>
+			</div>
+			<div class="jp-carousel-close-hint"><span>&times;</span></div>
+		</div>
+
+		<link rel='stylesheet' id='all-css-0-2' href='../s2.wp.com/wp-content/mu-plugins/carousel/jetpack-carousel8cab.css?m=1613561038h&amp;cssminify=yes' type='text/css' media='all' />
+<script id='comment-like-js-extra'>
+var comment_like_text = {"loading":"Loading..."};
+</script>
+<script id='jetpack-carousel-js-extra'>
+var jetpackCarouselStrings = {"widths":[370,700,1000,1200,1400,2000],"is_logged_in":"","lang":"en","ajaxurl":"https:\/\/diyplugger.com\/wp-admin\/admin-ajax.php","nonce":"7227e93097","display_exif":"1","display_comments":"1","display_geo":"1","single_image_gallery":"1","single_image_gallery_media_file":"","background_color":"black","comment":"Comment","post_comment":"Post Comment","write_comment":"Write a Comment...","loading_comments":"Loading Comments...","download_original":"View full size <span class=\"photo-size\">{0}<span class=\"photo-size-times\">\u00d7<\/span>{1}<\/span>","no_comment_text":"Please be sure to submit some text with your comment.","no_comment_email":"Please provide an email address to comment.","no_comment_author":"Please provide your name to comment.","comment_post_error":"Sorry, but there was an error posting your comment. Please try again later.","comment_approved":"Your comment was approved.","comment_unapproved":"Your comment is in moderation.","camera":"Camera","aperture":"Aperture","shutter_speed":"Shutter Speed","focal_length":"Focal Length","copyright":"Copyright","comment_registration":"0","require_name_email":"1","login_url":"https:\/\/diyplugger.wordpress.com\/wp-login.php?redirect_to=https%3A%2F%2Fdiyplugger.com%2F","blog_id":"188343997","meta_data":["camera","aperture","shutter_speed","focal_length","copyright"],"reblog":"Reblog","reblogged":"Reblogged","reblog_add_thoughts":"Add your thoughts here... (optional)","reblogging":"Reblogging...","post_reblog":"Post Reblog","stats_query_args":"blog=188343997&v=wpcom&tz=-5&user_id=0&subd=diyplugger","is_public":"1","reblog_enabled":""};
+</script>
+<script type='text/javascript' src='https://s2.wp.com/_static/??-eJyVztsKwjAMgOEXsotzbHgjPkvbhZmuJ5rM+fhWhni4ELwLf/JBYM3KpigYBRzDiFeymG+N4x28rcKisl8migw2hVCT8jQjP4wnA7xSxn/QR/iGL2V8sjPDoembDkZi2eyWK54uYtKvb/UYKCqjCwTNgqVOSoqu+te3uqSF0YNDyfVWPUM153Bqh7brh3bfHd0dgzJ1vg=='></script>
+	<script>
+	/(trident|msie)/i.test(navigator.userAgent)&&document.getElementById&&window.addEventListener&&window.addEventListener("hashchange",function(){var t,e=location.hash.substring(1);/^[A-z0-9_-]+$/.test(e)&&(t=document.getElementById(e))&&(/^(?:a|select|input|button|textarea)$/i.test(t.tagName)||(t.tabIndex=-1),t.focus())},!1);
+	</script>
+	<script type="text/javascript">
+// <![CDATA[
+(function() {
+try{
+  if ( window.external &&'msIsSiteMode' in window.external) {
+    if (window.external.msIsSiteMode()) {
+      var jl = document.createElement('script');
+      jl.type='text/javascript';
+      jl.async=true;
+      jl.src='wp-content/plugins/ie-sitemode/custom-jumplist.php';
+      var s = document.getElementsByTagName('script')[0];
+      s.parentNode.insertBefore(jl, s);
+    }
+  }
+}catch(e){}
+})();
+// ]]>
+</script><script src="../stats.wp.com/w7f39.js?61" defer></script> <script type="text/javascript">
+_tkq = window._tkq || [];
+_stq = window._stq || [];
+_tkq.push(['storeContext', {'blog_id':'188343997','blog_tz':'-5','user_lang':'en','blog_lang':'en','user_id':'0'}]);
+_stq.push(['view', {'blog':'188343997','v':'wpcom','tz':'-5','user_id':'0','post':'5','subd':'diyplugger'}]);
+_stq.push(['extra', {'crypt':'UE40eW5QN0p8M2Y/RE1TaVhzUzFMbjdWNHpwZGhTayxPSUFCMGNrd29+Smw0TDhnZmRTK0hlRi9QSGh6bi9GXVhBJWIlZlR5U1JMLU8/MkNtblkvY1czSy53aTEvRFZyLH5MUmdVVGEyTlFJP35mNjdGSXk/QnE/PTdySX5hZXFtLW4ra19QJks/TnBnRURaVFtvNXQ0TFdmZDFGPz9xX3AwPUpnQjhyViY/UWNDLGNWdVMlRzl+LUpsJTU3dWcxUi9YcXx1ZGtJbmN2VkxDMGwwRFZVLC9nYTV3SCxEc1Nham5Yck4lLVRaVDA5NmRfbXlKS3I4Y0Z+JW4uNkdKRSZS'}]);
+_stq.push([ 'clickTrackerInit', '188343997', '5' ]);
+	</script>
+<noscript><img src="../pixel.wp.com/b0b80.gif?v=noscript" style="height:1px;width:1px;overflow:hidden;position:absolute;bottom:1px;" alt="" /></noscript>
+<script>
+if ( 'object' === typeof wpcom_mobile_user_agent_info ) {
+
+	wpcom_mobile_user_agent_info.init();
+	var mobileStatsQueryString = "";
+	
+	if( false !== wpcom_mobile_user_agent_info.matchedPlatformName )
+		mobileStatsQueryString += "&x_" + 'mobile_platforms' + '=' + wpcom_mobile_user_agent_info.matchedPlatformName;
+	
+	if( false !== wpcom_mobile_user_agent_info.matchedUserAgentName )
+		mobileStatsQueryString += "&x_" + 'mobile_devices' + '=' + wpcom_mobile_user_agent_info.matchedUserAgentName;
+	
+	if( wpcom_mobile_user_agent_info.isIPad() )
+		mobileStatsQueryString += "&x_" + 'ipad_views' + '=' + 'views';
+
+	if( "" != mobileStatsQueryString ) {
+		new Image().src = document.location.protocol + '//pixel.wp.com/g.gif?v=wpcom-no-pv' + mobileStatsQueryString + '&baba=' + Math.random();
+	}
+	
+}
+</script>
+</body>
+
+<!-- Mirrored from diyplugger.com/ by HTTrack Website Copier/3.x [XR&CO'2014], Tue, 23 Feb 2021 11:02:52 GMT -->
+</html>
